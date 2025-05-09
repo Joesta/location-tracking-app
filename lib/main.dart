@@ -16,7 +16,6 @@ void main() async {
   await Hive.openBox<DailySummary>('summaries');
 
   await initializeService();
-  //runApp(const MyApp());
 
   runApp(
     ChangeNotifierProvider(
