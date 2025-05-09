@@ -1,5 +1,7 @@
-import 'package:geolocator/geolocator.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:hive/hive.dart';
+
+import '../services/geofence_service.dart';
 
 part 'daily_summary.g.dart';
 
@@ -39,31 +41,26 @@ class DailySummary extends HiveObject {
     return '${hours}h ${minutes}m';
   }
 
-  /// Updates the summary with new location data
-  void updateWithLocation(double lat, double lon, DateTime timestamp) {
-
+  /// Updates the summary with new location data using GeoFenceService
+  void updateWithLocation(
+      double lat, double lon, DateTime timestamp, GeoFenceService geoService) {
     startTime ??= timestamp;
-
-    // Coordinates of known places
-    const home = (28.2102213, -25.7456269);
-    const office = (28.15123237829154, -25.9169722);
-    const radius = 50.0;
-
-    final distanceToHome = Geolocator.distanceBetween(lat, lon, home.$1, home.$2);
-    final distanceToOffice = Geolocator.distanceBetween(lat, lon, office.$1, office.$2);
 
     final now = timestamp;
     final delta = startTime != null ? now.difference(startTime!).inSeconds : 0;
 
-    if (distanceToHome <= radius) {
-      homeSeconds += delta;
-    } else if (distanceToOffice <= radius) {
-      officeSeconds += delta;
-    } else {
-      travelingSeconds += delta;
+    final locationType = geoService.classifyLocation(lat, lon);
+    switch (locationType) {
+      case 'home':
+        homeSeconds += delta;
+        break;
+      case 'office':
+        officeSeconds += delta;
+        break;
+      default:
+        travelingSeconds += delta;
     }
 
-    // Update last known timestamp as start of next delta
     startTime = now;
   }
 
